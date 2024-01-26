@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RmPm.Core", "RmPm.Core\RmPm.Core.csproj", "{6EF7D267-8B65-4EF8-AC10-1C96CD5BF8FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RmPm", "RmPm\RmPm.csproj", "{500E6C60-1082-4C29-9349-C9549496D66C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6EF7D267-8B65-4EF8-AC10-1C96CD5BF8FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EF7D267-8B65-4EF8-AC10-1C96CD5BF8FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EF7D267-8B65-4EF8-AC10-1C96CD5BF8FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EF7D267-8B65-4EF8-AC10-1C96CD5BF8FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{500E6C60-1082-4C29-9349-C9549496D66C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{500E6C60-1082-4C29-9349-C9549496D66C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{500E6C60-1082-4C29-9349-C9549496D66C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{500E6C60-1082-4C29-9349-C9549496D66C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
