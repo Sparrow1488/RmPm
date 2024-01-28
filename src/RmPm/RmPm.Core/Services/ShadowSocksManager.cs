@@ -36,8 +36,7 @@ public class ShadowSocksManager : ProxyManager
         await File.WriteAllTextAsync(savePath, configJson, ctk).ConfigureAwait(false);
         Console.WriteLine($"File wrote success:{File.Exists(savePath)}: " + savePath);
 
-        BashAsync("ss-local -c " + savePath, ctk).ConfigureAwait(false); // NOTE: its loop freezing
-        await Task.Delay(1500, ctk);
+        await ActivateAsync().ConfigureAwait(false);
 
         Console.WriteLine(EncodeInline(config));
         
@@ -52,6 +51,21 @@ public class ShadowSocksManager : ProxyManager
         method
     );
 
+    private async Task ActivateAsync()
+    {
+        var command = string.Join(" & ", GetAllConfigFiles().Select(x => "ss-server -c " + x));
+        Console.WriteLine(command);
+
+        try
+        {
+            using var src = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            await BashAsync(command, src.Token).ConfigureAwait(false); // Утилиты ss-server, ss-local - х**ня, я считаю, что их авторы долджны гореть в аду за их кусок го*на
+        } catch
+        {
+            // ignored
+        }
+    }
+
     private static string EncodeInline(SocksConfig config)
     {
         var line = config.Method + ":" + config.Password + "@" + config.Server + ":" + config.ServerPort;
@@ -60,8 +74,7 @@ public class ShadowSocksManager : ProxyManager
 
     private string GetConfigName()
     {
-        var configs = Directory.GetFiles(_configuration["Proxies:ShadowSocks:ConfigsDir"]!);
-        var configLastNumber = configs
+        var configLastNumber = GetAllConfigFiles()
             .Select(Path.GetFileNameWithoutExtension)
             .Select(x => x!.ToArray().SkipWhile(y => !char.IsDigit(y)))
             .Select(x => string.Join("", x))
@@ -72,5 +85,12 @@ public class ShadowSocksManager : ProxyManager
         Console.WriteLine("Last config number is " + configLastNumber);
 
         return "config" + (configLastNumber == 0 ? 1 : ++configLastNumber) + ".json";
+    }
+
+    private string[] GetAllConfigFiles()
+    {
+        return Directory.GetFiles(_configuration["Proxies:ShadowSocks:ConfigsDir"]!)
+            .Where(x => Path.GetFileNameWithoutExtension(x).Any(char.IsDigit))
+            .ToArray();
     }
 }
