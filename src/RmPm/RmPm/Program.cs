@@ -13,12 +13,13 @@ logger.Information("RmPm started");
 
 try
 {
-    logger.Information("Creating client");
+    const string clientName = "Sparrow";
+    logger.Information("Creating client {client}", clientName);
     
     var socks = new ShadowSocksManager(configuration, logger);
-    var client = await socks.CreateClientAsync(new CreateRequest("Sparrow", Methods.ChaCha));
+    var client = await socks.CreateClientAsync(new CreateRequest(clientName, Methods.ChaCha));
     
-    logger.Information("Created success");
+    logger.Information("{client} created success", clientName);
     Console.WriteLine(client.ConfigString);
     Console.WriteLine(client.ConfigBase64);
 }

@@ -68,7 +68,7 @@ public class ShadowSocksManager : ProxyManager
     private async Task ActivateAsync(string configPath)
     {
         var command = $"ss-server -c {configPath} & ";
-        _logger.Debug(command);
+        _logger.Debug("[Command] " + command);
 
         try
         {
