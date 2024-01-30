@@ -1,24 +1,29 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
+using RmPm.Core;
 using RmPm.Core.Services;
-
-Console.WriteLine("RmPm started");
+using Serilog;
 
 var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+var logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .WriteTo.Console()
+    .CreateLogger();
+
+logger.Information("RmPm started");
 
 try
 {
-    Console.WriteLine("Creating client");
+    logger.Information("Creating client");
     
-    var socks = new ShadowSocksManager(configuration);
-    var client = await socks.CreateClientAsync("sparrow");
+    var socks = new ShadowSocksManager(configuration, logger);
+    var client = await socks.CreateClientAsync(new CreateRequest("Sparrow", Methods.ChaCha));
     
-    Console.WriteLine("Created success");
+    logger.Information("Created success");
     Console.WriteLine(client.ConfigString);
+    Console.WriteLine(client.ConfigBase64);
 }
 catch (Exception ex)
 {
-    Console.WriteLine(ex.Message);
+    logger.Error(ex, ex.Message);
     throw;
 }

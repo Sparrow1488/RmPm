@@ -11,12 +11,12 @@ public abstract class ProxyManager
     /// Выполнить команду в терминале
     /// </summary>
     /// <returns></returns>
-    protected static async Task BashAsync(string command, CancellationToken ctk = default)
+    protected static Task BashAsync(string command, CancellationToken ctk = default)
     {
         var psi = new ProcessStartInfo
         {
             FileName = "/bin/bash",
-            Arguments = "-c " + command,
+            Arguments = $"-c \"{command}\"",
             UseShellExecute = false,
             CreateNoWindow = true
         };
@@ -26,8 +26,8 @@ public abstract class ProxyManager
         if (process is null)
             throw new InvalidOperationException("Failed to run bash command " + command);
 
-        await process.WaitForExitAsync(ctk);
+        return process.WaitForExitAsync(ctk);
     }
 
-    public abstract Task<ProxyClient> CreateClientAsync(string name, CancellationToken ctk = default);
+    public abstract Task<ProxyClient> CreateClientAsync(CreateRequest request, CancellationToken ctk = default);
 }

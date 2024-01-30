@@ -17,4 +17,8 @@
       <ProjectReference Include="..\RmPm.Core\RmPm.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Serilog.Sinks.Console" Version="5.0.1" />
+    </ItemGroup>
+
 </Project>

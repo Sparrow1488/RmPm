@@ -2,17 +2,20 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Serilog;
 
 namespace RmPm.Core.Services;
 
 public class ShadowSocksManager : ProxyManager
 {
     private readonly IConfiguration _configuration;
+    private readonly ILogger _logger;
     private readonly JsonSerializerSettings _serializeSettings;
 
-    public ShadowSocksManager(IConfiguration configuration)
+    public ShadowSocksManager(IConfiguration configuration, ILogger logger)
     {
         _configuration = configuration;
+        _logger = logger;
         _serializeSettings = new JsonSerializerSettings
         {
             Formatting = Formatting.Indented,
@@ -23,46 +26,58 @@ public class ShadowSocksManager : ProxyManager
         };
     }
     
-    public override async Task<ProxyClient> CreateClientAsync(string name, CancellationToken ctk = default)
+    public override async Task<ProxyClient> CreateClientAsync(CreateRequest request, CancellationToken ctk = default)
     {
-        var config = GenConfig("chacha20-ietf-poly1305");
-        var configJson = JsonConvert.SerializeObject(config, _serializeSettings);
-
-        var saveDir = _configuration["Proxies:ShadowSocks:ConfigsDir"]!;
-        if (!Directory.Exists(saveDir))
-            throw new DirectoryNotFoundException(saveDir);
-
-        var savePath = Path.Combine(saveDir, GetConfigName());
-        await File.WriteAllTextAsync(savePath, configJson, ctk).ConfigureAwait(false);
-        Console.WriteLine($"File wrote success:{File.Exists(savePath)}: " + savePath);
-
-        await ActivateAsync().ConfigureAwait(false);
-
-        Console.WriteLine(EncodeInline(config));
+        var (config, json) = GenConfig(request.Method);
+        var directory = _configuration["Proxies:ShadowSocks:ConfigsDir"]!;
         
-        return new ProxyClient(name, config, configJson);
+        RequireDirectory(directory);
+        await ActivateAsync(await SaveConfigAsync(directory, json, ctk)).ConfigureAwait(false);
+        
+        return new ProxyClient(request.Name, config, json, EncodeInline(config));
     }
 
-    private SocksConfig GenConfig(string method) => new(
-        _configuration["Server:Ip"]!,
-        Random.Shared.Next(2000, 9000),
-        Random.Shared.Next(2000, 9000),
-        Guid.NewGuid().ToString().Replace("-", ""),
-        method
-    );
-
-    private async Task ActivateAsync()
+    private ConfigTuple GenConfig(string method)
     {
-        var command = string.Join(" & ", GetAllConfigFiles().Select(x => "ss-server -c " + x));
-        Console.WriteLine(command);
+        var config = new SocksConfig(
+            _configuration["Server:Ip"]!,
+            Random.Shared.Next(2000, 9000),
+            Random.Shared.Next(2000, 9000),
+            Guid.NewGuid().ToString().Replace("-", ""),
+            method
+        );
+        var json = JsonConvert.SerializeObject(config, _serializeSettings);
+        
+        return new ConfigTuple(config, json);
+    }
+
+    private static void RequireDirectory(string directory)
+    {
+       if (!Directory.Exists(directory)) throw new DirectoryNotFoundException(directory);
+    }
+
+    private async Task<string> SaveConfigAsync(string dir, string config, CancellationToken ctk = default)
+    {
+        var savePath = Path.Combine(dir, GetConfigName());
+        await File.WriteAllTextAsync(savePath, config, ctk).ConfigureAwait(false);
+        _logger.Debug("Config saved {status}, path '{path}'", File.Exists(savePath) ? "success" : "failed", savePath);
+
+        return savePath;
+    }
+
+    private async Task ActivateAsync(string configPath)
+    {
+        var command = $"ss-server -c {configPath} & ";
+        _logger.Debug(command);
 
         try
         {
-            using var src = new CancellationTokenSource(TimeSpan.FromSeconds(3));
-            await BashAsync(command, src.Token).ConfigureAwait(false); // Утилиты ss-server, ss-local - х**ня, я считаю, что их авторы долджны гореть в аду за их кусок го*на
+            using var src = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            await BashAsync(command, src.Token);
+            
         } catch
         {
-            // ignored
+            _logger.Debug("Cancel bash process");
         }
     }
 
@@ -82,8 +97,6 @@ public class ShadowSocksManager : ProxyManager
             .Select(int.Parse)
             .Max();
         
-        Console.WriteLine("Last config number is " + configLastNumber);
-
         return "config" + (configLastNumber == 0 ? 1 : ++configLastNumber) + ".json";
     }
 
@@ -93,4 +106,6 @@ public class ShadowSocksManager : ProxyManager
             .Where(x => Path.GetFileNameWithoutExtension(x).Any(char.IsDigit))
             .ToArray();
     }
+
+    private readonly record struct ConfigTuple(SocksConfig Config, string ConfigJson);
 }
