@@ -22,8 +22,6 @@ public partial class NetStat
         
         var input = await _pm.BashAsync($"sudo netstat -tulpn | grep {state}");
 
-        _logger.Debug("[{ctx}] Input {symbols}\n" + input, "netstat", input?.Length);
-
         if (string.IsNullOrWhiteSpace(input))
         {
             throw new InvalidOperationException("[netstat] Failed to receive net listeners list");

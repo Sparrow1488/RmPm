@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Net;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -11,6 +9,8 @@ namespace RmPm.Core.Services;
 
 public class ShadowSocksManager : ProxyManager
 {
+    private const string LogContext = "ss-manager";
+    
     private readonly IConfiguration _configuration;
     private readonly JsonSerializerSettings _serializeSettings;
     private readonly NetStat _netStats;
@@ -36,7 +36,7 @@ public class ShadowSocksManager : ProxyManager
         var items = await _netStats.GetListenersAsync();
         var ssListeners = items.Where(x => x.ProgramName.StartsWith("ss-")).ToArray();
         
-        Logger.Debug("Found {count} ss listeners", ssListeners.Length);
+        Logger.Debug("[{ctx}] Found {count} ss listeners", LogContext, ssListeners.Length);
 
         var sessions = new List<ProxySession>();
 
@@ -46,19 +46,19 @@ public class ShadowSocksManager : ProxyManager
             
             if (address is null)
             {
-                Logger.Debug("Invalid listener ({pid}) address {value}", listener.Pid, listener.LocalAddress);
+                Logger.Debug("[{ctx}] Invalid listener ({pid}) address {value}", LogContext, listener.Pid, listener.LocalAddress);
                 continue;
             }
             
             var matchConfig = configs.FirstOrDefault(c => c.Config.ServerPort == address.Value.Port);
 
-            if (matchConfig is { Config.ServerPort: 0 })
+            if (matchConfig == default)
             {
-                Logger.Debug("Config for listener {address} no match", listener.LocalAddress);
+                Logger.Debug("[{ctx}] Config for listener {address} no match", LogContext, listener.LocalAddress);
                 continue;                
             }
             
-            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig.Config));
+            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig.Config, listener));
         }
         
         return sessions.ToArray();
@@ -98,7 +98,7 @@ public class ShadowSocksManager : ProxyManager
     {
         var savePath = Path.Combine(dir, GetConfigName());
         await File.WriteAllTextAsync(savePath, config, ctk).ConfigureAwait(false);
-        Logger.Debug("Config saved {status}, path '{path}'", File.Exists(savePath) ? "success" : "failed", savePath);
+        Logger.Debug("[{ctx}] Config saved {status}, path '{path}'", LogContext, File.Exists(savePath) ? "success" : "failed", savePath);
 
         return savePath;
     }
