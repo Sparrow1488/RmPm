@@ -15,8 +15,9 @@ try
 {
     const string clientName = "Sparrow";
     logger.Information("Creating client {client}", clientName);
-    
-    var socks = new ShadowSocksManager(configuration, logger);
+
+    var pm = new ProcessManager(logger);
+    var socks = new ShadowSocksManager(configuration, pm, logger);
     var client = await socks.CreateClientAsync(new CreateRequest(clientName, Methods.ChaCha));
     
     logger.Information("{client} created success", clientName);
