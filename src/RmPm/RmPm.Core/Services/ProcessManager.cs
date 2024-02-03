@@ -43,7 +43,7 @@ public class ProcessManager : IProcessManager
             WorkingDirectory = Directory.GetCurrentDirectory()
         };
 
-        // HACK: Читать из настроек можно, когда не включена консоль
+        // HACK: Читать из потока можно, когда не включена консоль
         if (!info.ShowConsole)
         {
             startInfo.RedirectStandardError = true;

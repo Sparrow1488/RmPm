@@ -6,3 +6,8 @@ public record ProxyClient(
     string ConfigString,
     string ConfigBase64
 );
+
+public record ProxySession(
+    string Address,
+    ClientConfig? Config
+);

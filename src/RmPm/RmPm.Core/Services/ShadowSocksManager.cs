@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -11,6 +13,7 @@ public class ShadowSocksManager : ProxyManager
 {
     private readonly IConfiguration _configuration;
     private readonly JsonSerializerSettings _serializeSettings;
+    private readonly NetStat _netStats;
 
     public ShadowSocksManager(IConfiguration configuration, IProcessManager pm, ILogger logger) : base(pm, logger)
     {
@@ -23,8 +26,44 @@ public class ShadowSocksManager : ProxyManager
                 NamingStrategy = new SnakeCaseNamingStrategy()
             }
         };
+        _netStats = new NetStat(pm, logger);
     }
-    
+
+    public async Task<ProxySession[]> GetSessionsAsync(CancellationToken ctk = default)
+    {
+        var configs = await GetConfigsAsync(ctk);
+        
+        var items = await _netStats.GetListenersAsync();
+        var ssListeners = items.Where(x => x.ProgramName.StartsWith("ss-")).ToArray();
+        
+        Logger.Debug("Found {count} ss listeners", ssListeners.Length);
+
+        var sessions = new List<ProxySession>();
+
+        foreach (var listener in ssListeners)
+        {
+            var address = IPv4Address.Parse(listener.LocalAddress);
+            
+            if (address is null)
+            {
+                Logger.Debug("Invalid listener ({pid}) address {value}", listener.Pid, listener.LocalAddress);
+                continue;
+            }
+            
+            var matchConfig = configs.FirstOrDefault(c => c.Config.ServerPort == address.Value.Port);
+
+            if (matchConfig is { Config.ServerPort: 0 })
+            {
+                Logger.Debug("Config for listener {address} no match", listener.LocalAddress);
+                continue;                
+            }
+            
+            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig.Config));
+        }
+        
+        return sessions.ToArray();
+    }
+
     public override async Task<ProxyClient> CreateClientAsync(CreateRequest request, CancellationToken ctk = default)
     {
         var (config, json) = GenConfig(request.Method);
@@ -35,7 +74,7 @@ public class ShadowSocksManager : ProxyManager
         
         return new ProxyClient(request.Name, config, json, EncodeInline(config));
     }
-
+    
     private ConfigTuple GenConfig(string method)
     {
         var config = new SocksConfig(
@@ -94,6 +133,25 @@ public class ShadowSocksManager : ProxyManager
         return Directory.GetFiles(_configuration["Proxies:ShadowSocks:ConfigsDir"]!)
             .Where(x => Path.GetFileNameWithoutExtension(x).Any(char.IsDigit))
             .ToArray();
+    }
+
+    private async Task<ConfigTuple[]> GetConfigsAsync(CancellationToken ctk = default)
+    {
+        var files = GetAllConfigFiles();
+        var result = new List<ConfigTuple>();
+
+        foreach (var file in files)
+        {
+            var json = await File.ReadAllTextAsync(file, ctk);
+            var config = JsonConvert.DeserializeObject<SocksConfig>(json, _serializeSettings);
+
+            if (config is null)
+                throw new InvalidOperationException($"Failed to deserialize config {file}");
+            
+            result.Add(new ConfigTuple(config, json));
+        }
+
+        return result.ToArray();
     }
 
     private readonly record struct ConfigTuple(SocksConfig Config, string ConfigJson);
