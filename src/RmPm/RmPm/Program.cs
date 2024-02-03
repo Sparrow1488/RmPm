@@ -13,14 +13,11 @@ logger.Information("RmPm started");
 
 try
 {
-    const string clientName = "Sparrow";
-    logger.Information("Creating client {client}", clientName);
-
     var pm = new ProcessManager(logger);
     var socks = new ShadowSocksManager(configuration, pm, logger);
 
     // await CreateClientAsync(socks, clientName, logger);
-    await ShowActiveSessionsAsync(socks);
+    await ShowActiveSessionsAsync(socks, logger);
 }
 catch (Exception ex)
 {
@@ -28,8 +25,12 @@ catch (Exception ex)
     throw;
 }
 
-static async Task CreateClientAsync(ProxyManager proxyManager, string clientName, ILogger logger)
+static async Task CreateClientAsync(ProxyManager proxyManager, ILogger logger)
 {
+    const string clientName = "Sparrow";
+    
+    logger.Information("Creating client {client}", clientName);
+    
     var client = await proxyManager.CreateClientAsync(new CreateRequest(clientName, Methods.ChaCha));
     
     logger.Information("{client} created success", clientName);
@@ -37,10 +38,16 @@ static async Task CreateClientAsync(ProxyManager proxyManager, string clientName
     Console.WriteLine(client.ConfigBase64);
 }
 
-static async Task ShowActiveSessionsAsync(ShadowSocksManager ssManager)
+static async Task ShowActiveSessionsAsync(ShadowSocksManager ssManager, ILogger logger)
 {
+    logger.Information("Get active proxy sessions");
+    
     var sessions = await ssManager.GetSessionsAsync();
 
     foreach (var session in sessions)
-        Console.WriteLine(session.Address + " config: " + session.Config);
+        logger.Information(
+            "[PID:{pid}] Listen {address}" + session.Config, 
+            session.Listener.Pid, 
+            session.Address
+        );
 }
