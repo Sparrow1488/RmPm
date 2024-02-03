@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using RmPm.Core.Contracts;
 using Serilog;
 
 namespace RmPm.Core.Services;
@@ -9,13 +10,11 @@ namespace RmPm.Core.Services;
 public class ShadowSocksManager : ProxyManager
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
     private readonly JsonSerializerSettings _serializeSettings;
 
-    public ShadowSocksManager(IConfiguration configuration, ILogger logger)
+    public ShadowSocksManager(IConfiguration configuration, IProcessManager pm, ILogger logger) : base(pm, logger)
     {
         _configuration = configuration;
-        _logger = logger;
         _serializeSettings = new JsonSerializerSettings
         {
             Formatting = Formatting.Indented,
@@ -32,7 +31,7 @@ public class ShadowSocksManager : ProxyManager
         var directory = _configuration["Proxies:ShadowSocks:ConfigsDir"]!;
         
         RequireDirectory(directory);
-        await ActivateAsync(await SaveConfigAsync(directory, json, ctk)).ConfigureAwait(false);
+        await ActivateAsync(await SaveConfigAsync(directory, json, ctk), ctk).ConfigureAwait(false);
         
         return new ProxyClient(request.Name, config, json, EncodeInline(config));
     }
@@ -60,25 +59,15 @@ public class ShadowSocksManager : ProxyManager
     {
         var savePath = Path.Combine(dir, GetConfigName());
         await File.WriteAllTextAsync(savePath, config, ctk).ConfigureAwait(false);
-        _logger.Debug("Config saved {status}, path '{path}'", File.Exists(savePath) ? "success" : "failed", savePath);
+        Logger.Debug("Config saved {status}, path '{path}'", File.Exists(savePath) ? "success" : "failed", savePath);
 
         return savePath;
     }
 
-    private async Task ActivateAsync(string configPath)
+    private async Task ActivateAsync(string configPath, CancellationToken ctk = default)
     {
         var command = $"ss-server -c {configPath} & ";
-        _logger.Debug("[Command] " + command);
-
-        try
-        {
-            using var src = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            await BashAsync(command, src.Token);
-            
-        } catch
-        {
-            _logger.Debug("Cancel bash process");
-        }
+        await BashAsync(command, timeout: TimeSpan.FromSeconds(2), ctk);
     }
 
     private static string EncodeInline(SocksConfig config)
