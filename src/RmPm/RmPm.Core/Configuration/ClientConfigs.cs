@@ -13,4 +13,7 @@ public record SocksConfig(
     [JsonProperty("local_port")] int LocalPort,
     [JsonProperty("password")] string Password,
     [JsonProperty("method")] string Method
-) : ProxyClientConfig;
+) : ProxyClientConfig
+{
+    public const string Extension = ".json";
+}

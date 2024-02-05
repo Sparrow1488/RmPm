@@ -7,18 +7,25 @@ using RmPm.Core.Contracts;
 using RmPm.Core.Models;
 using Serilog;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Socks;
 
-public class ShadowSocksManager : ProxyManager
+public class SocksManager : ProxyManager
 {
     private const string LogContext = "ss-manager";
-    
+
+    private readonly IConfigFileProvider<SocksConfig> _configProvider;
     private readonly IConfiguration _configuration;
     private readonly JsonSerializerSettings _serializeSettings;
     private readonly NetStat _netStats;
 
-    public ShadowSocksManager(IConfiguration configuration, IProcessManager pm, ILogger logger) : base(pm, logger)
+    public SocksManager(
+        IConfigFileProvider<SocksConfig> configProvider,
+        IProcessManager pm,
+        IConfiguration configuration,
+        ILogger logger
+    ) : base(pm, logger)
     {
+        _configProvider = configProvider;
         _configuration = configuration;
         _serializeSettings = new JsonSerializerSettings
         {
@@ -28,12 +35,12 @@ public class ShadowSocksManager : ProxyManager
                 NamingStrategy = new SnakeCaseNamingStrategy()
             }
         };
-        _netStats = new NetStat(pm, logger);
+        _netStats = new NetStat(pm);
     }
 
     public async Task<ProxySession[]> GetSessionsAsync(CancellationToken ctk = default)
     {
-        var configs = await GetConfigsAsync(ctk);
+        var configs = await _configProvider.GetAllAsync(ctk);
         
         var items = await _netStats.GetListenersAsync();
         var ssListeners = items.Where(x => x.ProgramName.StartsWith("ss-")).ToArray();
@@ -52,7 +59,7 @@ public class ShadowSocksManager : ProxyManager
                 continue;
             }
             
-            var matchConfig = configs.FirstOrDefault(c => c.Config.ServerPort == address.Value.Port);
+            var matchConfig = configs.FirstOrDefault(c => c.ServerPort == address.Value.Port);
 
             if (matchConfig == default)
             {
@@ -60,7 +67,7 @@ public class ShadowSocksManager : ProxyManager
                 continue;                
             }
             
-            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig.Config, listener));
+            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig, listener));
         }
         
         return sessions.ToArray();
@@ -69,7 +76,7 @@ public class ShadowSocksManager : ProxyManager
     public override async Task<ProxyClient> CreateClientAsync(CreateRequest request, CancellationToken ctk = default)
     {
         var (config, json) = GenConfig(request.Method);
-        var directory = _configuration["Proxies:ShadowSocks:ConfigsDir"]!;
+        var directory = _configuration[ConfigNames.ShadowSocks.ConfigsRoot]!;
         
         RequireDirectory(directory);
         await ActivateAsync(await SaveConfigAsync(directory, json, ctk)).ConfigureAwait(false);
@@ -79,10 +86,10 @@ public class ShadowSocksManager : ProxyManager
     
     private ConfigTuple GenConfig(string method)
     {
-        // IConfigGenerator.Create
+        // TODO: IConfigGenerator.Create
         
         var config = new SocksConfig(
-            _configuration["Server:Ip"]!,
+            _configuration[ConfigNames.ServerIp]!,
             Random.Shared.Next(2000, 9000),
             Random.Shared.Next(2000, 9000),
             Guid.NewGuid().ToString().Replace("-", ""),
@@ -101,8 +108,11 @@ public class ShadowSocksManager : ProxyManager
     private async Task<string> SaveConfigAsync(string dir, string config, CancellationToken ctk = default)
     {
         // TODO: IConfigProvider.Save
+
+        var files = await _configProvider.GetFilesAsync(ctk);
+        var filename = _configProvider.NamingStrategy.GetNewName(SocksConfig.Extension, files);
         
-        var savePath = Path.Combine(dir, GetConfigName());
+        var savePath = Path.Combine(dir, filename);
         await File.WriteAllTextAsync(savePath, config, ctk).ConfigureAwait(false);
         Logger.Debug("[{ctx}] Config saved {status}, path '{path}'", LogContext, File.Exists(savePath) ? "success" : "failed", savePath);
 
@@ -119,50 +129,6 @@ public class ShadowSocksManager : ProxyManager
     {
         var line = config.Method + ":" + config.Password + "@" + config.Server + ":" + config.ServerPort;
         return "ss://" + Convert.ToBase64String(Encoding.UTF8.GetBytes(line)) + "\n";
-    }
-
-    private string GetConfigName()
-    {
-        // TODO: IConfigProvider.ConfigNamingStrategy
-        
-        var configLastNumber = GetAllConfigFiles()
-            .Select(Path.GetFileNameWithoutExtension)
-            .Select(x => x!.ToArray().SkipWhile(y => !char.IsDigit(y)))
-            .Select(x => string.Join("", x))
-            .Where(x => x.All(char.IsDigit) && !string.IsNullOrWhiteSpace(x))
-            .Select(int.Parse)
-            .Max();
-        
-        return "config" + (configLastNumber == 0 ? 1 : ++configLastNumber) + ".json";
-    }
-
-    private string[] GetAllConfigFiles()
-    {
-        // TODO: IConfigProvider.GetAllPath
-        return Directory.GetFiles(_configuration["Proxies:ShadowSocks:ConfigsDir"]!)
-            .Where(x => Path.GetFileNameWithoutExtension(x).Any(char.IsDigit))
-            .ToArray();
-    }
-
-    private async Task<ConfigTuple[]> GetConfigsAsync(CancellationToken ctk = default)
-    {
-        // TODO: IConfigProvider.GetAll
-        
-        var files = GetAllConfigFiles();
-        var result = new List<ConfigTuple>();
-
-        foreach (var file in files)
-        {
-            var json = await File.ReadAllTextAsync(file, ctk);
-            var config = JsonConvert.DeserializeObject<SocksConfig>(json, _serializeSettings);
-
-            if (config is null)
-                throw new InvalidOperationException($"Failed to deserialize config {file}");
-            
-            result.Add(new ConfigTuple(config, json));
-        }
-
-        return result.ToArray();
     }
 
     private readonly record struct ConfigTuple(SocksConfig Config, string ConfigJson);

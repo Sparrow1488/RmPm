@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using RmPm.Core;
 using RmPm.Core.Services;
+using RmPm.Core.Services.Socks;
 using Serilog;
 
 var configuration = new ConfigurationBuilder()
@@ -27,7 +28,9 @@ logger.Information("RmPm started");
 try
 {
     var pm = new ProcessManager(logger);
-    var socks = new ShadowSocksManager(configuration, pm, logger);
+    var jsonService = new JsonService();
+    var configs = new SocksConfigProvider(configuration, jsonService);
+    var socks = new SocksManager(configs, pm, configuration, logger);
 
     // await CreateClientAsync(socks, clientName, logger);
     await ShowActiveSessionsAsync(socks, logger);
@@ -51,7 +54,7 @@ static async Task CreateClientAsync(ProxyManager proxyManager, ILogger logger)
     Console.WriteLine(client.ConfigBase64);
 }
 
-static async Task ShowActiveSessionsAsync(ShadowSocksManager ssManager, ILogger logger)
+static async Task ShowActiveSessionsAsync(SocksManager ssManager, ILogger logger)
 {
     logger.Information("Get active proxy sessions");
     
@@ -59,7 +62,7 @@ static async Task ShowActiveSessionsAsync(ShadowSocksManager ssManager, ILogger 
 
     foreach (var session in sessions)
         logger.Information(
-            "[PID:{pid}] Listen {address}" + session.Config, 
+            "[PID:{pid}] Listen {address} " + session.Config, 
             session.Listener.Pid, 
             session.Address
         );

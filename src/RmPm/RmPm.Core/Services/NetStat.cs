@@ -8,12 +8,10 @@ namespace RmPm.Core.Services;
 public partial class NetStat
 {
     private readonly IProcessManager _pm;
-    private readonly ILogger _logger;
 
-    public NetStat(IProcessManager pm, ILogger logger)
+    public NetStat(IProcessManager pm)
     {
         _pm = pm;
-        _logger = logger;
     }
 
     public async Task<IEnumerable<NetListener>> GetListenersAsync()
