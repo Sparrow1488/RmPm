@@ -29,7 +29,8 @@ try
 {
     var pm = new ProcessManager(logger);
     var jsonService = new JsonService();
-    var configs = new SocksConfigProvider(configuration, jsonService);
+    // NOTE: файл без номера это конфигурация ShadowSocks, а не клиентов
+    var configs = new SocksConfigProvider(configuration, jsonService, logger, file => file.Number is not null);
     var socks = new SocksManager(configs, pm, configuration, logger);
 
     // await CreateClientAsync(socks, clientName, logger);
@@ -61,9 +62,13 @@ static async Task ShowActiveSessionsAsync(SocksManager ssManager, ILogger logger
     var sessions = await ssManager.GetSessionsAsync();
 
     foreach (var session in sessions)
+    {
         logger.Information(
-            "[PID:{pid}] Listen {address} " + session.Config, 
+            "[PID:{pid}] Listen {address}",
             session.Listener.Pid, 
             session.Address
         );
+        
+        Console.WriteLine(session.Config); // TODO: config path
+    }
 }

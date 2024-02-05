@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
+using Serilog;
 
 namespace RmPm.Core.Services.Socks;
 
@@ -10,15 +11,20 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     
     private readonly string _root;
     private readonly IJsonService _jsonService;
+    private readonly ILogger _logger;
 
-    public SocksConfigProvider(IConfiguration configuration, IJsonService jsonService)
+    public SocksConfigProvider(
+        IConfiguration configuration, 
+        IJsonService jsonService,
+        ILogger logger,
+        Func<ConsistentNamingStrategy.FileIndex, bool>? filesFilter = default)
     {
+        var consistentName = configuration.GetValue<string>(ConfigNames.ShadowSocks.ConsistentName) ?? DefaultConsistentName;
+        NamingStrategy = new ConsistentNamingStrategy(consistentName, filesFilter);
+        
+        _logger = logger;
         _jsonService = jsonService;
         _root = configuration.GetValue<string>(ConfigNames.ShadowSocks.ConfigsRoot)!;
-        var consistentName = configuration.GetValue<string>(ConfigNames.ShadowSocks.ConsistentName) ?? DefaultConsistentName;
-
-        // NOTE: ставим фильтр на конфиг без номера, потому что это конфиг сервера, а не клиентов
-        NamingStrategy = new ConsistentNamingStrategy(consistentName, i => i.Number is not null);
         
         RequireRoot(_root);
     }
@@ -42,9 +48,9 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
             var config = _jsonService.Deserialize<SocksConfig>(json);
 
             if (config == default)
-                throw new InvalidOperationException($"Failed to deserialize config {file}");
-            
-            result.Add(config);
+                _logger.Warning("Failed to deserialize config {file}", file);
+            else            
+                result.Add(config);
         }
 
         return result.ToArray();

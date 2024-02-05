@@ -16,7 +16,8 @@ public class JsonService : IJsonService
             ContractResolver = new DefaultContractResolver
             {
                 NamingStrategy = new SnakeCaseNamingStrategy()
-            }
+            },
+            Error = (_,err) => err.ErrorContext.Handled = true
         };
     }
     
