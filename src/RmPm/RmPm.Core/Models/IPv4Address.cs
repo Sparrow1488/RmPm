@@ -1,5 +1,6 @@
-namespace RmPm.Core;
+namespace RmPm.Core.Models;
 
+// ReSharper disable once InconsistentNaming
 public readonly record struct IPv4Address(string Ip, int Port)
 {
     public static IPv4Address? Parse(string row)

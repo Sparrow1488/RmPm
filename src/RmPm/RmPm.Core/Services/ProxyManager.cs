@@ -1,4 +1,6 @@
+using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
+using RmPm.Core.Extensions;
 using Serilog;
 
 namespace RmPm.Core.Services;
@@ -21,7 +23,7 @@ public abstract class ProxyManager
     /// Выполнить команду в терминале
     /// </summary>
     /// <returns></returns>
-    protected async Task BashAsync(string command, TimeSpan? timeout = default, CancellationToken ctk = default)
+    protected async Task BashAsync(string command, TimeSpan? timeout = default)
     {
         const string logContext = "[Bash]";
         
@@ -31,13 +33,7 @@ public abstract class ProxyManager
         
         try
         {
-            await ProcessManager.RunAsync(new ProcessRunInfo
-            {
-                Arguments = $"-c \"{command}\"",
-                FileName = "/bin/bash",
-                ShowConsole = false,
-                // Timeout = timeout // TODO: FEATURE
-            }, src.Token);
+            await ProcessManager.BashAsync(command, src.Token);
         }
         catch
         {

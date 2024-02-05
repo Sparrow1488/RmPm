@@ -1,16 +1,16 @@
 using RmPm.Core.Services;
 
-namespace RmPm.Core;
+namespace RmPm.Core.Configuration;
 
 public record ProxyClient(
     string FriendlyName, 
-    ClientConfig Config, 
+    ProxyClientConfig Config, 
     string ConfigString,
     string ConfigBase64
 );
 
 public record ProxySession(
     string Address,
-    ClientConfig? Config,
+    ProxyClientConfig? Config,
     NetListener Listener
 );

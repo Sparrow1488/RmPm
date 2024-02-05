@@ -1,8 +1,11 @@
 using Newtonsoft.Json;
 
-namespace RmPm.Core;
+namespace RmPm.Core.Configuration;
 
-public abstract record ClientConfig;
+/// <summary>
+/// Конфигурация прокси-клиента
+/// </summary>
+public abstract record ProxyClientConfig;
 
 public record SocksConfig(
     [JsonProperty("server")] string Server,
@@ -10,4 +13,4 @@ public record SocksConfig(
     [JsonProperty("local_port")] int LocalPort,
     [JsonProperty("password")] string Password,
     [JsonProperty("method")] string Method
-) : ClientConfig;
+) : ProxyClientConfig;

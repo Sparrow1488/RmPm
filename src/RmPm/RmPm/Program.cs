@@ -31,7 +31,7 @@ static async Task CreateClientAsync(ProxyManager proxyManager, ILogger logger)
     
     logger.Information("Creating client {client}", clientName);
     
-    var client = await proxyManager.CreateClientAsync(new CreateRequest(clientName, Methods.ChaCha));
+    var client = await proxyManager.CreateClientAsync(new CreateRequest(clientName, Encrypt.ShadowSocks.ChaCha20));
     
     logger.Information("{client} created success", clientName);
     Console.WriteLine(client.ConfigString);
