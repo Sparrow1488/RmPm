@@ -1,13 +1,26 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Reflection;
+using Microsoft.Extensions.Configuration;
 using RmPm.Core;
 using RmPm.Core.Services;
 using Serilog;
 
-var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json") // TODO: provide from args
+#if DEBUG
+    .AddUserSecrets(Assembly.GetAssembly(typeof(Program))!)
+#endif
+    .Build();
+
 var logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .WriteTo.Console()
     .CreateLogger();
+
+#if DEBUG
+    logger.Debug("Mode=DEBUG");
+#else
+    logger.Debug("Mode=RELEASE");
+#endif
 
 logger.Information("RmPm started");
 
