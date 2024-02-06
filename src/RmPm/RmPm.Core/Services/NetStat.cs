@@ -17,7 +17,7 @@ public partial class NetStat
     {
         const string state = "LISTEN";
         
-        var input = await _pm.RunAsync(new BashRun($"sudo netstat -tulpn | grep {state}"));
+        var input = await _pm.RunAsync(new BashNetListeners(state));
 
         if (string.IsNullOrWhiteSpace(input))
         {
