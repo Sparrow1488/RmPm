@@ -3,6 +3,5 @@ namespace RmPm.Core;
 /// <summary>
 /// Запрос на создание прокси-клиента
 /// </summary>
-/// <param name="Name">Имя клиента</param>
-/// <param name="Method">Метод шифрования</param>
-public record CreateRequest(string Name, string Method);
+/// <param name="FriendlyName">Имя клиента</param>
+public record CreateRequest(string FriendlyName);

@@ -41,5 +41,5 @@ public abstract class ProxyManager
         }
     }
 
-    public abstract Task<ProxyClient> CreateClientAsync(CreateRequest request, CancellationToken ctk = default);
+    public abstract Task<ProxyClient> CreateClientAsync(CancellationToken ctk = default);
 }

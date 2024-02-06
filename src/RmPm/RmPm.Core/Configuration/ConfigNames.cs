@@ -8,5 +8,6 @@ public static class ConfigNames
     {
         public const string ConfigsRoot = "Proxies:ShadowSocks:ConfigsRoot";
         public const string ConsistentName = "Proxies:ShadowSocks:ConsistentName";
+        public const string GenMethod = "Proxies:ShadowSocks:GenMethod";
     }
 }

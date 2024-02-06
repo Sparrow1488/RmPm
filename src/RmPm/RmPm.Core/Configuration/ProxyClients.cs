@@ -3,9 +3,7 @@ using RmPm.Core.Services;
 namespace RmPm.Core.Configuration;
 
 public record ProxyClient(
-    string FriendlyName, 
     ProxyClientConfig Config, 
-    string ConfigString,
     string ConfigBase64
 );
 

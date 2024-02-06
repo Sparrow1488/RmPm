@@ -2,9 +2,10 @@ using RmPm.Core.Configuration;
 
 namespace RmPm.Core.Contracts;
 
-public interface IConfigFileProvider<TConfig> where TConfig : ProxyClientConfig
+public interface IConfigFileProvider<TConfig> 
+    where TConfig : ProxyClientConfig
 {
-    FileNamingStrategy NamingStrategy { get; }
-    Task<string[]> GetFilesAsync(CancellationToken ctk = default);
+    Task<string> SaveAsync(TConfig config, CancellationToken ctk = default);
+    Task<TConfig> GenerateAsync(CancellationToken ctk = default);
     Task<TConfig[]> GetAllAsync(CancellationToken ctk = default);
 }

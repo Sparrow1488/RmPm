@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using RmPm.Core.Contracts;
 using RmPm.Core.Extensions;
-using Serilog;
 
 namespace RmPm.Core.Services;
 
