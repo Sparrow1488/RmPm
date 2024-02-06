@@ -5,6 +5,8 @@ using RmPm.Core.Services;
 using RmPm.Core.Services.Socks;
 using Serilog;
 
+#region Configuration
+
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json") // TODO: provide from args
 #if DEBUG
@@ -12,18 +14,30 @@ var configuration = new ConfigurationBuilder()
 #endif
     .Build();
 
+#endregion
+
+#region Logger
+
 var logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .WriteTo.Console()
     .CreateLogger();
 
+#endregion
+
+#region Write Mode
+
 #if DEBUG
-    logger.Debug("Mode=DEBUG");
+logger.Debug("Mode=DEBUG");
 #else
     logger.Debug("Mode=RELEASE");
 #endif
 
+#endregion
+
 logger.Information("RmPm started");
+
+#region Initialize
 
 var pm = new ProcessManager(logger);
 var jsonService = new JsonService();
@@ -31,12 +45,18 @@ var jsonService = new JsonService();
 var configs = new SocksConfigProvider(configuration, jsonService, logger, file => file.Number is not null);
 var socks = new SocksManager(configs, pm, logger);
 
+#endregion
+
+#region CLI Commands
+
 var commands = new Dictionary<string, Command>
 {
     { "create", new CreateClientCommand(socks, logger) },
     { "sessions", new GetSessionsCommand(socks, logger) },
     { "", new GetSessionsCommand(socks, logger) }
 };
+
+#endregion
 
 try
 {
