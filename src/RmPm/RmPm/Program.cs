@@ -60,7 +60,7 @@ var commands = new Dictionary<string, Command>
 {
     { "create", new CreateClientCommand(socks, logger) },
     { "sessions", new GetSessionsCommand(socks, logger) },
-    { "delete", new DeleteClientCommand(socks, logger, args.Length > 1 ? args[1] : "-1") }, // NOTE: да, пока что удаление будет по PID ору
+    { "delete", new DeleteClientCommand(socks, store, logger, args.Length > 1 ? args[1] : "") }, // NOTE: да, пока что удаление будет по PID ору
     { "", new GetSessionsCommand(socks, logger) }
 };
 
