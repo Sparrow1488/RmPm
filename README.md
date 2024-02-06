@@ -15,3 +15,20 @@ Remote Proxy Manager
 4. `[Утилита]` Чтение конфига в `Inline`, `JSON` и `QR` форматах
 5. `[Утилита]` Хранение конфигов клиентов в friendly виде (сопоставление юзер-конфиг)
 6. `[Бот]` Перенос возможностей утилиты в бота
+
+## Ассоциация конфиг файлов
+
+#### Json формат
+
+```json
+[
+    {
+    	"FriendlyName": "MyClient",
+    	"ConfigPath": "/etc/shadowsocks-libev/config1.json"
+	},
+    {
+        "FriendlyName": "MyClient-2",
+    	"ConfigPath": "/etc/shadowsocks-libev/config2.json"
+    }
+]
+```
