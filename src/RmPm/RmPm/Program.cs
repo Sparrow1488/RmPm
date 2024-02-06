@@ -45,12 +45,12 @@ logger.Information("RmPm started");
 
 var pm = new ProcessManager(logger);
 var jsonService = new JsonService();
-var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService);
+var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService, logger);
 // NOTE: файл без номера это конфигурация ShadowSocks, а не клиентов
 var configs = new SocksConfigProvider(configuration, jsonService, store, logger, file => file.Number is not null);
 var socks = new SocksManager(configs, pm, logger);
 
-await RestoreConfigEntriesAsync(configs, store, logger);
+await store.RestoreAsync(await configs.GetAllAsync());
 
 #endregion
 
@@ -75,23 +75,4 @@ catch (Exception ex)
 {
     logger.Error(ex, ex.Message);
     throw;
-}
-
-static async Task RestoreConfigEntriesAsync(SocksConfigProvider provider, Store store, Logger logger)
-{
-    var configs = await provider.GetAllAsync();
-    var entries = await store.GetAllAsync();
-
-    foreach (var config in configs)
-    {
-        var savePath = config.FilePath;
-        if (entries.All(x => x.ConfigPath != savePath))
-        {
-            logger.Debug("Restore unsaved config {path}", config.FilePath);
-            await store.SaveAsync(new EntryStore
-            {
-                ConfigPath = config.FilePath
-            }.SetFriendlyNameByFilename(config.FilePath));
-        }
-    }
 }

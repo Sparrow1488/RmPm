@@ -1,5 +1,8 @@
+using System.Formats.Tar;
+using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Models;
+using Serilog;
 
 namespace RmPm.Core.Services;
 
@@ -9,11 +12,16 @@ public class Store
     
     private readonly ILocalStore _store;
     private readonly IJsonService _jsonService;
+    private readonly ILogger _logger;
 
-    public Store(ILocalStore store, IJsonService jsonService)
+    public Store(
+        ILocalStore store, 
+        IJsonService jsonService,
+        ILogger logger)
     {
         _store = store;
         _jsonService = jsonService;
+        _logger = logger;
     }
     
     public async Task SaveAsync(EntryStore entry, CancellationToken ctk = default)
@@ -39,6 +47,34 @@ public class Store
     {
         var json = _jsonService.Serialize(items);
         await _store.WriteAsync(StoreFilename, json, ctk);
+    }
+
+    public async Task RestoreAsync(SocksConfig[] configs, CancellationToken ctk = default)
+    {
+        var entries = await GetAllAsync(ctk);
+
+        bool IsActual(EntryStore entry, SocksConfig config) => entry.ConfigPath == config.FilePath;
+
+        foreach (var config in configs)
+        {
+            if (entries.All(x => !IsActual(x, config)))
+            {
+                _logger.Debug("Restore unsaved config {path}", config.FilePath);
+                await SaveAsync(new EntryStore
+                {
+                    ConfigPath = config.FilePath
+                }.SetFriendlyNameByFilename(config.FilePath), ctk);
+            }
+        }
+
+        foreach (var entry in entries)
+        {
+            if (configs.All(x => !IsActual(entry, x)))
+            {
+                _logger.Debug("Delete outdated entry {id}", entry.Id);
+                await DeleteAsync(entry, ctk);
+            }
+        }
     }
 
     public async Task DeleteAsync(EntryStore entry, CancellationToken ctk = default)
