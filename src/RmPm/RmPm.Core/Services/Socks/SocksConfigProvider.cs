@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
+using RmPm.Core.Models;
 using Serilog;
 
 namespace RmPm.Core.Services.Socks;
@@ -14,12 +15,14 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     
     private readonly string _root;
     private readonly IJsonService _jsonService;
+    private readonly Store _store;
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
 
     public SocksConfigProvider(
         IConfiguration configuration, 
         IJsonService jsonService,
+        Store store,
         ILogger logger,
         Func<ConsistentNamingStrategy.FileIndex, bool>? filesFilter = default)
     {
@@ -28,6 +31,7 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         
         _logger = logger;
         _jsonService = jsonService;
+        _store = store;
         _configuration = configuration;
         _root = configuration.GetValue<string>(ConfigNames.ShadowSocks.ConfigsRoot)!;
         
@@ -48,10 +52,17 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         _logger.Debug("Config write in '{path}'", savePath);
 
         await File.WriteAllTextAsync(savePath, json, ctk);
-        return savePath;
+
+        await _store.SaveAsync(new EntryStore
+        {
+            FriendlyName = Path.GetFileNameWithoutExtension(savePath),
+            ConfigPath = savePath
+        }, ctk);
+        
+        return config.FilePath = savePath;
     }
 
-    public Task DeleteAsync(SocksConfig config, CancellationToken ctk = default)
+    public async Task DeleteAsync(SocksConfig config, CancellationToken ctk = default)
     {
         if (string.IsNullOrWhiteSpace(config.FilePath) && !File.Exists(config.FilePath))
         {
@@ -62,7 +73,9 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
             File.Delete(config.FilePath);
         }
 
-        return Task.CompletedTask;
+        var entry = await _store.FindAsync(x => x.ConfigPath == config.FilePath, ctk);
+        if (entry is not null)
+            await _store.DeleteAsync(entry, ctk);
     }
 
     public async Task<SocksConfig> GenerateAsync(CancellationToken ctk = default)

@@ -41,8 +41,9 @@ logger.Information("RmPm started");
 
 var pm = new ProcessManager(logger);
 var jsonService = new JsonService();
+var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService);
 // NOTE: файл без номера это конфигурация ShadowSocks, а не клиентов
-var configs = new SocksConfigProvider(configuration, jsonService, logger, file => file.Number is not null);
+var configs = new SocksConfigProvider(configuration, jsonService, store, logger, file => file.Number is not null);
 var socks = new SocksManager(configs, pm, logger);
 
 #endregion

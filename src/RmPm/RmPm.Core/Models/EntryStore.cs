@@ -1,0 +1,13 @@
+using Newtonsoft.Json;
+
+namespace RmPm.Core.Models;
+
+public class EntryStore
+{
+    [JsonProperty("id")] 
+    public Guid Id { get; set; } = Guid.Empty;
+    [JsonProperty("friendly_name")]
+    public string? FriendlyName { get; set; }
+    [JsonProperty("config_path")]
+    public string? ConfigPath { get; set; }
+}
