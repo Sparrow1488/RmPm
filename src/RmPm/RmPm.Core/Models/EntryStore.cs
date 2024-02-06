@@ -10,4 +10,10 @@ public class EntryStore
     public string? FriendlyName { get; set; }
     [JsonProperty("config_path")]
     public string? ConfigPath { get; set; }
+
+    public EntryStore SetFriendlyNameByFilename(string? filename)
+    {
+        FriendlyName = Path.GetFileNameWithoutExtension(filename);
+        return this;
+    }
 }

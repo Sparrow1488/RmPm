@@ -53,11 +53,13 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
 
         await File.WriteAllTextAsync(savePath, json, ctk);
 
-        await _store.SaveAsync(new EntryStore
-        {
-            FriendlyName = Path.GetFileNameWithoutExtension(savePath),
-            ConfigPath = savePath
-        }, ctk);
+        await _store.SaveAsync(
+            new EntryStore
+            {
+                ConfigPath = savePath
+            }.SetFriendlyNameByFilename(savePath), 
+            ctk
+        );
         
         return config.FilePath = savePath;
     }
