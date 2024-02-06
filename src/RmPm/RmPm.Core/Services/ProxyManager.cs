@@ -16,7 +16,7 @@ public abstract class ProxyManager
         Logger = logger;
     }
     
-    private IProcessManager ProcessManager { get; }
+    protected IProcessManager ProcessManager { get; }
     protected ILogger Logger { get; }
 
     /// <summary>

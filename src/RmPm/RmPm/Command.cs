@@ -1,6 +1,8 @@
+using RmPm.Core.Configuration;
 using RmPm.Core.Services;
 using RmPm.Core.Services.Socks;
 using Serilog;
+using Serilog.Core;
 
 namespace RmPm;
 
@@ -60,6 +62,35 @@ public class GetSessionsCommand : Command
             );
         
             Console.WriteLine(session.Config); // TODO: config path
+        }
+    }
+}
+
+public class DeleteClientCommand : Command
+{
+    private readonly SocksManager _pm;
+    private readonly Logger _logger;
+    private readonly string _pid;
+
+    public DeleteClientCommand(SocksManager pm, Logger logger, string pid)
+    {
+        _pm = pm;
+        _logger = logger;
+        _pid = pid;
+    }
+    
+    public override async Task ExecuteAsync()
+    {
+        var sessions = await _pm.GetSessionsAsync();
+        var clientSession = sessions.FirstOrDefault(x => x.Listener.Pid == _pid);
+
+        if (clientSession?.Config is SocksConfig config)
+        {
+            await _pm.DeleteClientAsync(config);
+        }
+        else
+        {
+            _logger.Warning("The client is not active or is not a ShadowSocks client");
         }
     }
 }

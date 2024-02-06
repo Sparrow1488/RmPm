@@ -51,6 +51,20 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         return savePath;
     }
 
+    public Task DeleteAsync(SocksConfig config, CancellationToken ctk = default)
+    {
+        if (string.IsNullOrWhiteSpace(config.FilePath) && !File.Exists(config.FilePath))
+        {
+            _logger.Information("Config not found and cannot be deleted");
+        }
+        else
+        {
+            File.Delete(config.FilePath);
+        }
+
+        return Task.CompletedTask;
+    }
+
     public async Task<SocksConfig> GenerateAsync(CancellationToken ctk = default)
     {
         var all = await GetAllAsync(ctk);
@@ -82,11 +96,14 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         {
             var json = await File.ReadAllTextAsync(file, ctk);
             var config = _jsonService.Deserialize<SocksConfig>(json);
-
+            
             if (config == default)
                 _logger.Warning("Failed to deserialize config {file}", file);
-            else            
+            else
+            {
                 result.Add(config);
+                config.FilePath = file;
+            }
         }
 
         return result.ToArray();

@@ -1,8 +1,10 @@
 using System.Text;
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
+using RmPm.Core.Extensions;
 using RmPm.Core.Models;
 using Serilog;
+using Serilog.Data;
 
 namespace RmPm.Core.Services.Socks;
 
@@ -73,5 +75,25 @@ public class SocksManager : ProxyManager
     {
         var line = config.Method + ":" + config.Password + "@" + config.Server + ":" + config.ServerPort;
         return "ss://" + Convert.ToBase64String(Encoding.UTF8.GetBytes(line)) + "\n";
+    }
+
+    public async Task DeleteClientAsync(SocksConfig config, CancellationToken ctk = default)
+    {
+        var sessions = await GetSessionsAsync(ctk);
+        var session = sessions.FirstOrDefault(x => x.Config == config);
+
+        if (session is not null)
+        {
+            await ProcessManager.KillAsync(session.Listener.Pid, ctk);
+            Logger.Debug("Kill client {client}", session.Listener.Pid);
+        }
+        else
+        {
+            var address = $"{config.Server}:{config.ServerPort}";
+            Logger.Debug("Client is not active {client}", address);
+        }
+
+        await _configProvider.DeleteAsync(config, ctk);
+        Logger.Debug("Delete client config");
     }
 }

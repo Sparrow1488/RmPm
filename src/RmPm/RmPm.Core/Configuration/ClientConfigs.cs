@@ -16,4 +16,6 @@ public record SocksConfig(
 ) : ProxyClientConfig
 {
     public const string Extension = ".json";
+    [JsonIgnore]
+    public string? FilePath { get; internal set; }
 }
