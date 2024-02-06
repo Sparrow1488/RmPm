@@ -64,7 +64,7 @@ public class SocksManager : ProxyManager
         var path = await _configProvider.SaveAsync(config, ctk);
         
         var command = $"ss-server -c {path} & ";
-        await BashAsync(command, timeout: TimeSpan.FromSeconds(2));
+        await BashAsync(command, timeout: TimeSpan.FromSeconds(1));
         
         return new ProxyClient(config, EncodeInline(config));
     }

@@ -1,6 +1,6 @@
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
-using RmPm.Core.Extensions;
+using RmPm.Core.Models;
 using Serilog;
 
 namespace RmPm.Core.Services;
@@ -33,7 +33,7 @@ public abstract class ProxyManager
         
         try
         {
-            await ProcessManager.BashAsync(command, src.Token);
+            await ProcessManager.RunAsync(new BashRun(command), src.Token);
         }
         catch
         {

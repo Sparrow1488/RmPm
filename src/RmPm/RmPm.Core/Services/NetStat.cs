@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using RmPm.Core.Contracts;
-using RmPm.Core.Extensions;
+using RmPm.Core.Models;
 
 namespace RmPm.Core.Services;
 
@@ -17,7 +17,7 @@ public partial class NetStat
     {
         const string state = "LISTEN";
         
-        var input = await _pm.BashAsync($"sudo netstat -tulpn | grep {state}");
+        var input = await _pm.RunAsync(new BashRun($"sudo netstat -tulpn | grep {state}"));
 
         if (string.IsNullOrWhiteSpace(input))
         {

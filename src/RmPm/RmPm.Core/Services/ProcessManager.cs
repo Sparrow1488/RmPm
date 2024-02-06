@@ -13,7 +13,19 @@ public class ProcessManager : IProcessManager
     {
         _logger = logger;
     }
-    
+
+    public Task<string?> RunAsync(RunArgs args, CancellationToken ctk = default)
+    {
+        var runInfo = new ProcessRunInfo
+        {
+            FileName = args.FileName,
+            Arguments = args.Arguments,
+            ShowConsole = !args.ReadOutputOrHideConsole
+        };
+
+        return RunAsync(runInfo, ctk);
+    }
+
     public async Task<string?> RunAsync(ProcessRunInfo runInfo, CancellationToken ctk = default)
     {
         var info = MapInfo(runInfo);
@@ -99,3 +111,5 @@ public class ProcessRunInfo
     public required string FileName { get; init; }
     // public TimeSpan? Timeout { get; set; } // TODO: FEATURE
 }
+
+public record RunArgs(string FileName, string Arguments, bool ReadOutputOrHideConsole = false);
