@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using RmPm;
+using RmPm.Commands;
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Models;
