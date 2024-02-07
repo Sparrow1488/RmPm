@@ -14,14 +14,14 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     private const int GenerationPortStep = 1;
     
     private readonly string _root;
-    private readonly IJsonService _jsonService;
+    private readonly SocksConfigReader _configReader;
     private readonly Store _store;
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
 
     public SocksConfigProvider(
         IConfiguration configuration, 
-        IJsonService jsonService,
+        SocksConfigReader configReader,
         Store store,
         ILogger logger,
         Func<ConsistentNamingStrategy.FileIndex, bool>? filesFilter = default)
@@ -30,7 +30,7 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         NamingStrategy = new ConsistentNamingStrategy(consistentName, filesFilter);
         
         _logger = logger;
-        _jsonService = jsonService;
+        _configReader = configReader;
         _store = store;
         _configuration = configuration;
         _root = configuration.GetValue<string>(ConfigNames.ShadowSocks.ConfigsRoot)!;
@@ -42,7 +42,7 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     
     public async Task<string> SaveAsync(SocksConfig config, CancellationToken ctk = default)
     {
-        var json = _jsonService.Serialize(config);
+        var json = _configReader.ToJson(config);
         var filename = NamingStrategy.GetNewName(SocksConfig.Extension, GetRootFiles());
         var savePath = Path.Combine(_root, filename);
 
@@ -53,13 +53,16 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
 
         await File.WriteAllTextAsync(savePath, json, ctk);
 
-        await _store.SaveAsync(
-            new EntryStore
-            {
-                ConfigPath = savePath
-            }.SetFriendlyNameByFilename(savePath), 
-            ctk
-        );
+        var entry = new EntryStore
+        {
+            ConfigPath = savePath,
+            FriendlyName = config.FriendlyName
+        };
+
+        if (string.IsNullOrWhiteSpace(entry.FriendlyName))
+            entry.SetFriendlyNameByFilename(savePath);
+        
+        await _store.SaveAsync(entry, ctk);
         
         return config.FilePath = savePath;
     }
@@ -105,19 +108,24 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     public async Task<SocksConfig[]> GetAllAsync(CancellationToken ctk = default)
     {
         var files = NamingStrategy.SelectFiles(GetRootFiles());
+        var entries = await _store.GetAllAsync(ctk);
         var result = new List<SocksConfig>();
 
         foreach (var file in files)
         {
             var json = await File.ReadAllTextAsync(file, ctk);
-            var config = _jsonService.Deserialize<SocksConfig>(json);
+            var config = _configReader.ToConfig(json);
             
             if (config == default)
                 _logger.Warning("Failed to deserialize config {file}", file);
             else
             {
+                var friendlyName = entries.FirstOrDefault(x => x.ConfigPath == file)?.FriendlyName;
+                
                 result.Add(config);
+                
                 config.FilePath = file;
+                config.FriendlyName = friendlyName;
             }
         }
 

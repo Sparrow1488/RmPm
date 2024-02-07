@@ -27,8 +27,8 @@ public class ReadConfigCommand : Command
 
         _formatDict = new Dictionary<string, Func<SocksConfig, object>>
         {
-            { "json", configReader.ReadJson },
-            { "base64", c => configReader.ReadBase64(c, tag: "RmPmClient") },
+            { "json", configReader.ToJson },
+            { "base64", c => configReader.ToBase64(c, tag: "RmPmClient") },
             { "qr", c => throw new NotImplementedException() }
         };
     }

@@ -18,4 +18,6 @@ public record SocksConfig(
     public const string Extension = ".json";
     [JsonIgnore]
     public string? FilePath { get; internal set; }
+    [JsonIgnore]
+    public string? FriendlyName { get; internal set; }
 }

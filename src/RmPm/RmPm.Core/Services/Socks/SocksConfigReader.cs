@@ -12,17 +12,17 @@ public class SocksConfigReader : IConfigReader<SocksConfig>
         _jsonService = jsonService;
     }
     
-    public string ReadJson(SocksConfig read)
+    public string ToJson(SocksConfig read)
     {
         return _jsonService.Serialize(read);
     }
 
-    public SocksConfig? ReadBack(string json)
+    public SocksConfig? ToConfig(string json)
     {
         return _jsonService.Deserialize<SocksConfig>(json);
     }
 
-    public string ReadBase64(SocksConfig read, string? tag = null)
+    public string ToBase64(SocksConfig read, string? tag = null)
     {
         return new SocksBase64Encoded(read, tag).ToString();
     }

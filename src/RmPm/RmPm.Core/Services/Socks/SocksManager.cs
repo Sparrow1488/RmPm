@@ -1,4 +1,3 @@
-using System.Text;
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Extensions;
@@ -59,20 +58,13 @@ public class SocksManager : ProxyManager
         return sessions.ToArray();
     }
 
-    public override async Task<ProxyClient> CreateClientAsync(CancellationToken ctk = default)
+    public override async Task<ProxyClientConfig> CreateClientAsync(CreateClientRequest request, CancellationToken ctk = default)
     {
         var config = await _configProvider.GenerateAsync(ctk);
-        var path = await _configProvider.SaveAsync(config, ctk);
+        config.FriendlyName = request.FriendlyName;
         
-        await BashAsync(new BashRunSocks(path));
-        
-        return new ProxyClient(config, EncodeInline(config));
-    }
-
-    private static string EncodeInline(SocksConfig config)
-    {
-        var line = config.Method + ":" + config.Password + "@" + config.Server + ":" + config.ServerPort;
-        return "ss://" + Convert.ToBase64String(Encoding.UTF8.GetBytes(line)) + "\n";
+        await BashAsync(new BashRunSocks(await _configProvider.SaveAsync(config, ctk)));
+        return config;
     }
 
     public async Task DeleteClientAsync(SocksConfig config, CancellationToken ctk = default)

@@ -42,10 +42,10 @@ logger.Information("RmPm started");
 
 var pm = new ProcessManager(logger);
 var jsonService = new JsonService();
+var configReader = new SocksConfigReader(jsonService);
 var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService, logger);
 // NOTE: файл без номера это конфигурация ShadowSocks, а не клиентов
-var configs = new SocksConfigProvider(configuration, jsonService, store, logger, file => file.Number is not null);
-var configReader = new SocksConfigReader(jsonService);
+var configs = new SocksConfigProvider(configuration, configReader, store, logger, file => file.Number is not null);
 var socks = new SocksManager(configs, pm, logger);
 var inputHelper = new InputHelper(store, socks, logger);
 
@@ -55,15 +55,16 @@ await store.RestoreAsync(await configs.GetAllAsync());
 
 #region CLI Commands
 
+var creationClientName = args.Length > 1 ? args[1] : null;
 var findConfigArgument = args.Length > 1 ? args[1] : "";
 var readConfigFormat = args.Length > 2 ? args[2] : "";
 
 var commands = new Dictionary<string, Command>
 {
-    { "create", new CreateClientCommand(socks, logger) },
-    { "sessions", new GetSessionsCommand(socks, logger) },
-    { "delete", new DeleteClientCommand(socks, logger, inputHelper, findConfigArgument) },
-    { "read", new ReadConfigCommand(configReader, inputHelper, logger, findConfigArgument, readConfigFormat) },
+    { "new", new CreateClientCommand(socks, configReader, logger, creationClientName) },
+    { "all", new GetSessionsCommand(socks, logger) },
+    { "del", new DeleteClientCommand(socks, logger, inputHelper, findConfigArgument) },
+    { "get", new ReadConfigCommand(configReader, inputHelper, logger, findConfigArgument, readConfigFormat) },
     { "", new GetSessionsCommand(socks, logger) }
 };
 
