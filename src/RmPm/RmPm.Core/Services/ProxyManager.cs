@@ -23,17 +23,24 @@ public abstract class ProxyManager
     /// Выполнить команду в терминале
     /// </summary>
     /// <returns></returns>
-    protected async Task BashAsync(string command, TimeSpan? timeout = default)
+    protected async Task BashAsync(BashRun args)
     {
         const string logContext = "[Bash]";
+
+        TimeSpan? timeout = null;
+
+        if (args is BashRunDetached)
+        {
+            timeout = TimeSpan.FromSeconds(1);
+        }
         
-        Logger.Debug("{ctx} " + command, logContext);
+        Logger.Debug("{ctx} " + args.Arguments, logContext);
 
         using var src = timeout is null ? new CancellationTokenSource() : new CancellationTokenSource(timeout.Value);
         
         try
         {
-            await ProcessManager.RunAsync(new BashRun(command), src.Token);
+            await ProcessManager.RunAsync(args, src.Token);
         }
         catch
         {

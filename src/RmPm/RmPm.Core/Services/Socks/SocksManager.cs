@@ -4,7 +4,6 @@ using RmPm.Core.Contracts;
 using RmPm.Core.Extensions;
 using RmPm.Core.Models;
 using Serilog;
-using Serilog.Data;
 
 namespace RmPm.Core.Services.Socks;
 
@@ -65,8 +64,7 @@ public class SocksManager : ProxyManager
         var config = await _configProvider.GenerateAsync(ctk);
         var path = await _configProvider.SaveAsync(config, ctk);
         
-        var command = $"ss-server -c {path} & ";
-        await BashAsync(command, timeout: TimeSpan.FromSeconds(1));
+        await BashAsync(new BashRunSocks(path));
         
         return new ProxyClient(config, EncodeInline(config));
     }
