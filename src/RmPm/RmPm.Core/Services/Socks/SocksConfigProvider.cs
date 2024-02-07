@@ -49,8 +49,6 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
         if (File.Exists(savePath))
             throw new InvalidOperationException($"Cannot save already exists file {savePath}");
         
-        _logger.Debug("Config write in '{path}'", savePath);
-
         await File.WriteAllTextAsync(savePath, json, ctk);
 
         var entry = new EntryStore
@@ -71,12 +69,11 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
     {
         if (string.IsNullOrWhiteSpace(config.FilePath) && !File.Exists(config.FilePath))
         {
-            _logger.Information("Config not found and cannot be deleted");
+            _logger.Information("Config not found at '{path}'", config.FilePath);
+            return;
         }
-        else
-        {
-            File.Delete(config.FilePath);
-        }
+
+        File.Delete(config.FilePath);
 
         var entry = await _store.FindAsync(x => x.ConfigPath == config.FilePath, ctk);
         if (entry is not null)

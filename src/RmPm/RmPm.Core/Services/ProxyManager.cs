@@ -10,14 +10,12 @@ namespace RmPm.Core.Services;
 /// </summary>
 public abstract class ProxyManager
 {
-    protected ProxyManager(IProcessManager processManager, ILogger logger)
+    protected ProxyManager(IProcessManager processManager)
     {
         ProcessManager = processManager;
-        Logger = logger;
     }
     
     protected IProcessManager ProcessManager { get; }
-    protected ILogger Logger { get; }
 
     /// <summary>
     /// Выполнить команду в терминале
@@ -25,17 +23,11 @@ public abstract class ProxyManager
     /// <returns></returns>
     protected async Task BashAsync(BashRun args)
     {
-        const string logContext = "[Bash]";
-
         TimeSpan? timeout = null;
 
         if (args is BashRunDetached)
-        {
-            timeout = TimeSpan.FromSeconds(1);
-        }
+            timeout = TimeSpan.FromSeconds(0.5);
         
-        Logger.Debug("{ctx} " + args.Arguments, logContext);
-
         using var src = timeout is null ? new CancellationTokenSource() : new CancellationTokenSource(timeout.Value);
         
         try
@@ -44,7 +36,7 @@ public abstract class ProxyManager
         }
         catch
         {
-            Logger.Debug("{ctx} Timed out", logContext);
+            // Ignore
         }
     }
 

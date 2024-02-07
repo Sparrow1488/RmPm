@@ -2,36 +2,34 @@ using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Extensions;
 using RmPm.Core.Models;
-using Serilog;
 
 namespace RmPm.Core.Services.Socks;
 
 public class SocksManager : ProxyManager
 {
-    private const string LogContext = "ss-manager";
-
     private readonly IConfigFileProvider<SocksConfig> _configProvider;
+    private readonly Store _store;
     private readonly NetStat _netStats;
 
     public SocksManager(
         IConfigFileProvider<SocksConfig> configProvider,
         IProcessManager pm,
-        ILogger logger
-    ) : base(pm, logger)
+        Store store
+    ) : base(pm)
     {
         _configProvider = configProvider;
+        _store = store;
         _netStats = new NetStat(pm);
     }
 
     public async Task<ProxySession[]> GetSessionsAsync(CancellationToken ctk = default)
     {
         var configs = await _configProvider.GetAllAsync(ctk);
+        var entries = await _store.GetAllAsync(ctk);
         
         var items = await _netStats.GetListenersAsync();
         var ssListeners = items.Where(x => x.ProgramName.StartsWith("ss-")).ToArray();
         
-        Logger.Debug("[{ctx}] Found {count} ss listeners", LogContext, ssListeners.Length);
-
         var sessions = new List<ProxySession>();
 
         foreach (var listener in ssListeners)
@@ -40,19 +38,14 @@ public class SocksManager : ProxyManager
             
             if (address is null)
             {
-                Logger.Debug("[{ctx}] Invalid listener ({pid}) address {value}", LogContext, listener.Pid, listener.LocalAddress);
+                // Invalid listener address
                 continue;
             }
             
-            var matchConfig = configs.FirstOrDefault(c => c.ServerPort == address.Value.Port);
-
-            if (matchConfig == default)
-            {
-                Logger.Debug("[{ctx}] Config for listener {address} no match", LogContext, listener.LocalAddress);
-                continue;                
-            }
+            var config = configs.FirstOrDefault(c => c.ServerPort == address.Value.Port);
+            var entry = entries.FirstOrDefault(x => x.ConfigPath == config?.FilePath);
             
-            sessions.Add(new ProxySession(listener.LocalAddress, matchConfig, listener));
+            sessions.Add(new ProxySession(listener.LocalAddress, config, entry, listener));
         }
         
         return sessions.ToArray();
@@ -75,15 +68,8 @@ public class SocksManager : ProxyManager
         if (session is not null)
         {
             await ProcessManager.KillAsync(session.Listener.Pid, ctk);
-            Logger.Debug("Kill client {client}", session.Listener.Pid);
-        }
-        else
-        {
-            var address = $"{config.Server}:{config.ServerPort}";
-            Logger.Debug("Client is not active {client}", address);
         }
 
         await _configProvider.DeleteAsync(config, ctk);
-        Logger.Debug("Delete client config");
     }
 }

@@ -23,14 +23,11 @@ public class CreateClientCommand : Command
     
     public override async Task ExecuteAsync()
     {
-        const string clientName = "Sparrow";
+        var config = (SocksConfig) await _pm.CreateClientAsync(new CreateClientRequest(_clientName));
     
-        _logger.Information("Creating client {client}", clientName);
-    
-        var config = await _pm.CreateClientAsync(new CreateClientRequest(_clientName));
-    
-        _logger.Information("{client} created success", clientName);
-        Console.WriteLine(config);
-        Console.WriteLine(_configReader.ToBase64((SocksConfig) config));
+        _logger.Information("{client} created", config.FriendlyName);
+        
+        Console.WriteLine("\n" + _configReader.ToJson(config));
+        Console.WriteLine("\n" + _configReader.ToBase64(config));
     }
 }

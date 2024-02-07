@@ -1,3 +1,4 @@
+using RmPm.Core.Configuration;
 using RmPm.Core.Services.Socks;
 using Serilog;
 
@@ -16,19 +17,33 @@ public class GetSessionsCommand : Command
     
     public override async Task ExecuteAsync()
     {
-        _logger.Information("Get active proxy sessions");
-    
         var sessions = await _pm.GetSessionsAsync();
-
-        foreach (var session in sessions)
-        {
-            _logger.Information(
-                "[PID:{pid}] Listen {address}",
-                session.Listener.Pid, 
-                session.Address
-            );
         
-            Console.WriteLine(session.Config); // TODO: config path
+        if (sessions.Length == 0)
+            _logger.Information("No clients are running");
+        
+        foreach (var session in sessions)
+            ShowSession(session);
+    }
+
+    private void ShowSession(ProxySession session)
+    {
+        var config = (SocksConfig?) session.Config;
+        var entry = session.Entry;
+
+        if (entry is null || config is null)
+        {
+            _logger.Warning("Entry or config not found to display {address}", session.Address);
+            return;
         }
+        
+        _logger.Information(
+            "[{id}][{pid}][{name}] Listen {address}, '{path}'",
+            entry.Id,
+            session.Listener.Pid,
+            entry.FriendlyName,
+            session.Address,
+            config.FilePath
+        );
     }
 }

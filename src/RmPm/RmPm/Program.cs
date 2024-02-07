@@ -46,7 +46,7 @@ var configReader = new SocksConfigReader(jsonService);
 var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService, logger);
 // NOTE: файл без номера это конфигурация ShadowSocks, а не клиентов
 var configs = new SocksConfigProvider(configuration, configReader, store, logger, file => file.Number is not null);
-var socks = new SocksManager(configs, pm, logger);
+var socks = new SocksManager(configs, pm, store);
 var inputHelper = new InputHelper(store, socks, logger);
 
 await store.RestoreAsync(await configs.GetAllAsync());

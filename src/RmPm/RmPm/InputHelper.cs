@@ -1,4 +1,5 @@
 using RmPm.Core.Configuration;
+using RmPm.Core.Models;
 using RmPm.Core.Services;
 using RmPm.Core.Services.Socks;
 using Serilog;
@@ -18,36 +19,47 @@ public class InputHelper
         _logger = logger;
     }
     
+    /// <summary>
+    /// Позволяет найти конфиг файл клиента по ID или FriendlyName из записи, а также по PID процесса
+    /// </summary>
+    /// <param name="argument"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public async Task<SocksConfig?> FindConfigAsync(string argument)
     {
         if (string.IsNullOrWhiteSpace(argument))
-            throw new Exception("No delete argument");
+            throw new ArgumentException("Search argument is null or empty", nameof(argument));
         
         var sessions = await _socksManager.GetSessionsAsync();
 
         ProxyClientConfig? config;
+        string searchBy;
 
-        if (int.TryParse(argument, out _)) // PID
+        if (int.TryParse(argument, out _))
         {
             config = sessions.FirstOrDefault(x => x.Listener.Pid == argument)?.Config;
-            _logger.Information("Found config by PID");
+            searchBy = "PID";
         }
-        else if (Guid.TryParse(argument, out var id)) // ID
+        else if (Guid.TryParse(argument, out var id))
         {
-            var entry = (await _store.GetAllAsync()).FirstOrDefault(x => x.Id == id);
-            config = FindBy(sessions, entry?.ConfigPath ?? "-");
-            
-            _logger.Information("Found config by ID");
+            config = await FindAsync(sessions, e => e.Id == id);
+            searchBy = "ID";
         }
-        else // FriendlyName
+        else
         {
-            var entry = (await _store.GetAllAsync()).FirstOrDefault(x => x.FriendlyName == argument);
-            config = FindBy(sessions, entry?.ConfigPath ?? "-");
-            
-            _logger.Information("Found config by FriendlyName");
+            config = await FindAsync(sessions, e => e.FriendlyName == argument);
+            searchBy = "FriendlyName";
         }
+        
+        _logger.Information("Search config by {by}", searchBy);
 
         return (SocksConfig?) config;
+    }
+
+    private async Task<SocksConfig?> FindAsync(ProxySession[] sessions, Func<EntryStore, bool> search)
+    {
+        var entry = (await _store.GetAllAsync()).FirstOrDefault(search.Invoke);
+        return FindBy(sessions, entry?.ConfigPath ?? "-");
     }
 
     private static SocksConfig? FindBy(ProxySession[] sessions, string configPath)
