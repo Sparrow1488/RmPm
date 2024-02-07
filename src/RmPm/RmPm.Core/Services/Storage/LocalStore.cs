@@ -1,6 +1,6 @@
 using RmPm.Core.Contracts;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Storage;
 
 public class LocalStore : ILocalStore
 {

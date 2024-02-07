@@ -3,7 +3,7 @@ using RmPm.Core.Contracts;
 using RmPm.Core.Models;
 using Serilog;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Storage;
 
 public class Store
 {

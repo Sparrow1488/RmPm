@@ -1,8 +1,9 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using RmPm.Core.Contracts;
 using RmPm.Core.Models;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Utilities;
 
 public partial class NetStat
 {
@@ -11,6 +12,11 @@ public partial class NetStat
     public NetStat(IProcessManager pm)
     {
         _pm = pm;
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            throw new NotSupportedException("This utility supported only for linux");
+        }
     }
 
     public async Task<IEnumerable<NetListener>> GetListenersAsync()
@@ -21,7 +27,7 @@ public partial class NetStat
 
         if (string.IsNullOrWhiteSpace(input))
         {
-            throw new InvalidOperationException("[netstat] Failed to receive net listeners list");
+            throw new InvalidOperationException("[netstat] Failed to receive Net listeners list");
         }
         
         var results = input.Split(new[] { Environment.NewLine }, StringSplitOptions.None)

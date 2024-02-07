@@ -1,4 +1,4 @@
-namespace RmPm.Core;
+namespace RmPm.Core.Strategies;
 
 /// <summary>
 /// Стратегия именования файлов

@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RmPm.Core.Contracts;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Auxiliary;
 
 public class JsonService : IJsonService
 {

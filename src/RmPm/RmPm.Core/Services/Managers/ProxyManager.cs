@@ -1,9 +1,8 @@
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Models;
-using Serilog;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Managers;
 
 /// <summary>
 /// Утилита для управления прокси или ВПН

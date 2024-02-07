@@ -1,7 +1,7 @@
 using RmPm.Core.Configuration;
 using RmPm.Core.Models;
-using RmPm.Core.Services;
 using RmPm.Core.Services.Socks;
+using RmPm.Core.Services.Storage;
 using Serilog;
 
 namespace RmPm;
@@ -52,6 +52,9 @@ public class InputHelper
         }
         
         _logger.Information("Search config by {by}", searchBy);
+        
+        if (config is null)
+            _logger.Warning("Client config not found by {argument}", argument);
 
         return (SocksConfig?) config;
     }

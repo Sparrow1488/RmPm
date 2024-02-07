@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Configuration;
 using RmPm;
 using RmPm.Commands;
-using RmPm.Core.Services;
+using RmPm.Core.Services.Auxiliary;
+using RmPm.Core.Services.Managers;
 using RmPm.Core.Services.Socks;
+using RmPm.Core.Services.Storage;
 using Serilog;
 
 #region Configuration
@@ -26,21 +28,9 @@ var logger = new LoggerConfiguration()
 
 #endregion
 
-#region Write Mode
-
-#if DEBUG
-logger.Debug("Mode=DEBUG");
-#else
-    logger.Debug("Mode=RELEASE");
-#endif
-
-#endregion
-
-logger.Information("RmPm started");
-
 #region Initialize
 
-var pm = new ProcessManager(logger);
+var pm = new ProcessManager();
 var jsonService = new JsonService();
 var configReader = new SocksConfigReader(jsonService);
 var store = new Store(new LocalStore(AppContext.BaseDirectory), jsonService, logger);
@@ -64,7 +54,7 @@ var commands = new Dictionary<string, Command>
     { "new", new CreateClientCommand(socks, configReader, logger, creationClientName) },
     { "all", new GetSessionsCommand(socks, logger) },
     { "del", new DeleteClientCommand(socks, logger, inputHelper, findConfigArgument) },
-    { "get", new ReadConfigCommand(configReader, inputHelper, logger, findConfigArgument, readConfigFormat) },
+    { "get", new ReadConfigCommand(configReader, inputHelper, findConfigArgument, readConfigFormat) },
     { "", new GetSessionsCommand(socks, logger) }
 };
 

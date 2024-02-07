@@ -25,10 +25,7 @@ public class DeleteClientCommand : Command
         if (config is not null)
         {
             await _pm.DeleteClientAsync(config);
-        }
-        else
-        {
-            _logger.Warning("The client config not found");
+            _logger.Information("Client deleted");
         }
     }
 }

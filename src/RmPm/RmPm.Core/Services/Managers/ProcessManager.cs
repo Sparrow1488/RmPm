@@ -1,19 +1,10 @@
 using System.Diagnostics;
 using RmPm.Core.Contracts;
-using Serilog;
 
-namespace RmPm.Core.Services;
+namespace RmPm.Core.Services.Managers;
 
 public class ProcessManager : IProcessManager
 {
-    private const string LogContext = "[PM]";
-    private readonly ILogger _logger;
-
-    public ProcessManager(ILogger logger)
-    {
-        _logger = logger;
-    }
-
     public Task<string?> RunAsync(RunArgs args, CancellationToken ctk = default)
     {
         var runInfo = new ProcessRunInfo
@@ -66,9 +57,8 @@ public class ProcessManager : IProcessManager
         return startInfo;
     }
 
-    private void Kill(Process process)
+    private static void Kill(Process process)
     {
-        _logger.Debug("{ctx} Process killed", LogContext);
         process.Kill();
     }
     
@@ -88,8 +78,6 @@ public class ProcessManager : IProcessManager
 
     private CancellationTokenRegistration? RegisterTimeout(TimeSpan? timeout, Action timeoutAction)
     {
-        _logger.Debug("{ctx} RegisterTimeout {span}", LogContext, timeout.ToString());
-        
         if (timeout is null) return default;
         
         var src = new CancellationTokenSource(timeout.Value);
@@ -97,7 +85,6 @@ public class ProcessManager : IProcessManager
         
         return token.Register(() =>
         {
-            _logger.Debug("{ctx} Process timed out", LogContext);
             timeoutAction.Invoke();
             src.Dispose();
         });
