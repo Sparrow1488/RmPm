@@ -119,17 +119,19 @@ public class SocksConfigProvider : IConfigFileProvider<SocksConfig>
             if (config == default)
                 _logger.Warning("Failed to deserialize config {file}", file);
             else
-            {
-                var friendlyName = entries.FirstOrDefault(x => x.ConfigPath == file)?.FriendlyName;
-                
-                result.Add(config);
-                
-                config.FilePath = file;
-                config.FriendlyName = friendlyName;
-            }
+                result.Add(AttachAdditionalInfo(config, file, entries));
         }
 
         return result.ToArray();
+    }
+
+    private static SocksConfig AttachAdditionalInfo(SocksConfig config, string savePath, EntryStore[] entries)
+    {
+        var friendlyName = entries.FirstOrDefault(x => x.ConfigPath == savePath)?.FriendlyName;
+        config.FilePath = savePath;
+        config.FriendlyName = friendlyName;
+        
+        return config;
     }
     
     private string[] GetRootFiles() => Directory.GetFiles(_root);
