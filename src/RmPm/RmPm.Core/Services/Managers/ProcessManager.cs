@@ -11,7 +11,8 @@ public class ProcessManager : IProcessManager
         {
             FileName = args.FileName,
             Arguments = args.Arguments,
-            ShowConsole = !args.ReadOutputOrHideConsole
+            ShowConsole = !args.ReadOutputOrHideConsole,
+            Timeout = args.Timeout
         };
 
         return RunAsync(runInfo, ctk);
@@ -24,14 +25,13 @@ public class ProcessManager : IProcessManager
         using var process = new Process { StartInfo = info };
         
         await using var cancellation = ctk.Register(() => Kill(process));
-        // await using var timeout = RegisterTimeout(runInfo.Timeout, () => Kill(process)); // TODO: FEATURE
+        using var timeout = RegisterTimeout(runInfo.Timeout, () => Kill(process));
         
-        var result = await StartReadingAsync(process, ctk);
+        var result = await StartReadingAsync(process, ctk).ConfigureAwait(false);
         
         await process.WaitForExitAsync(ctk).ConfigureAwait(false);
         
         cancellation.Unregister();
-        // timeout?.Unregister();
 
         return result;
     }
@@ -76,18 +76,20 @@ public class ProcessManager : IProcessManager
         return string.Empty;
     }
 
-    private CancellationTokenRegistration? RegisterTimeout(TimeSpan? timeout, Action timeoutAction)
+    private CancellationTokenSource? RegisterTimeout(TimeSpan? timeout, Action timeoutAction)
     {
         if (timeout is null) return default;
         
         var src = new CancellationTokenSource(timeout.Value);
         var token = src.Token;
         
-        return token.Register(() =>
+        token.Register(() =>
         {
             timeoutAction.Invoke();
             src.Dispose();
         });
+
+        return src;
     }
 }
 
@@ -96,7 +98,32 @@ public class ProcessRunInfo
     public bool ShowConsole { get; set; }
     public string? Arguments { get; set; }
     public required string FileName { get; init; }
-    // public TimeSpan? Timeout { get; set; } // TODO: FEATURE
+    public TimeSpan? Timeout { get; set; }
 }
 
-public record RunArgs(string FileName, string Arguments, bool ReadOutputOrHideConsole = false);
+public record RunArgs(string FileName, string Arguments, bool ReadOutputOrHideConsole = false, TimeSpan? Timeout = null);
+
+// internal interface IExecutionBehaviour : IDisposable
+// {
+//     void Initialize(Process process);
+// }
+//
+// internal class CancellationExecutionBehaviour : IExecutionBehaviour
+// {
+//     private readonly CancellationToken _ctk;
+//
+//     public CancellationExecutionBehaviour(CancellationToken ctk)
+//     {
+//         _ctk = ctk;
+//     }
+//     
+//     public void Initialize(Process process)
+//     {
+//         _ctk = 
+//     }
+//     
+//     public void Dispose()
+//     {
+//         throw new NotImplementedException();
+//     }
+// }
