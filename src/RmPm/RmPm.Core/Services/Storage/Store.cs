@@ -1,6 +1,7 @@
 using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Models;
+using RmPm.Core.Models.Storage;
 using Serilog;
 
 namespace RmPm.Core.Services.Storage;

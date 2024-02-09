@@ -3,6 +3,7 @@ using RmPm.Core.Configuration;
 using RmPm.Core.Contracts;
 using RmPm.Core.Defaults;
 using RmPm.Core.Models;
+using RmPm.Core.Models.Storage;
 using RmPm.Core.Services.Storage;
 using RmPm.Core.Strategies;
 using Serilog;

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace RmPm.Core.Models;
+namespace RmPm.Core.Models.Storage;
 
 public class EntryStore
 {

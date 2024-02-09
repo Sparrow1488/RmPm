@@ -1,5 +1,6 @@
 using RmPm.Core.Configuration;
 using RmPm.Core.Models;
+using RmPm.Core.Models.Storage;
 using RmPm.Core.Services.Socks;
 using RmPm.Core.Services.Storage;
 using Serilog;
