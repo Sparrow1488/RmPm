@@ -23,7 +23,7 @@ var configuration = new ConfigurationBuilder()
 
 var logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
-    .WriteTo.Console()
+    .WriteTo.Console(outputTemplate: "{Level:u3}: {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
 
 #endregion
