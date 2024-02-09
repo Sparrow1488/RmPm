@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.CommandLine;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using RmPm;
 using RmPm.Commands;
@@ -45,25 +46,62 @@ await store.RestoreAsync(await configs.GetAllAsync());
 
 #region CLI Commands
 
-var creationClientName = args.Length > 1 ? args[1] : null;
-var findConfigArgument = args.Length > 1 ? args[1] : "";
-var readConfigFormat = args.Length > 2 ? args[2] : "";
+var root = new RootCommand();
 
-var commands = new Dictionary<string, Command>
+var clientNameOption = new Option<string>(new[] {"-n", "--name"}, "Имя клиента")
 {
-    { "new", new CreateClientCommand(socks, configReader, logger, creationClientName) },
-    { "all", new GetSessionsCommand(socks, logger) },
-    { "del", new DeleteClientCommand(socks, logger, inputHelper, findConfigArgument) },
-    { "get", new ReadConfigCommand(configReader, inputHelper, findConfigArgument, readConfigFormat) },
-    { "", new GetSessionsCommand(socks, logger) }
+    IsRequired = true,
+    Arity = ArgumentArity.ExactlyOne
 };
+
+var findClientOption = new Option<string>(new[] {"-c", "--client"}, "Идентификатор пользователя (PID, ID, Name)")
+{
+    IsRequired = true,
+    Arity = ArgumentArity.ExactlyOne
+};
+
+var configFormatOption = new Option<string>(new[] {"-f", "--format"}, "Формат чтения файла настроек")
+{
+    IsRequired = true,
+    Arity = ArgumentArity.ExactlyOne
+}.FromAmong("json", "base64");
+
+var newCommand = new Command("new", "Создать нового клиента");
+newCommand.AddOption(clientNameOption);
+newCommand.SetHandler(
+    client => new CreateClientCommand(socks, configReader, logger, client).ExecuteAsync(), 
+    clientNameOption
+);
+
+var getSessionsCommand = new Command("all", "Показать всех активных клиентов");
+getSessionsCommand.SetHandler(() => new GetSessionsCommand(socks, logger).ExecuteAsync());
+
+var deleteCommand = new Command("del", "Удалить пользователя");
+deleteCommand.AddOption(findClientOption);
+deleteCommand.SetHandler(
+    findClient => new DeleteClientCommand(socks, logger, inputHelper, findClient).ExecuteAsync(), 
+    findClientOption
+);
+
+var readConfigCommand = new Command("read", "Прочитать файл настроек клиента в указанном формате");
+readConfigCommand.AddOption(findClientOption);
+readConfigCommand.AddOption(configFormatOption);
+readConfigCommand.SetHandler(
+    (findClient, format) => new ReadConfigCommand(configReader, inputHelper, findClient, format).ExecuteAsync(), 
+    findClientOption, 
+    configFormatOption
+);
+
+root.AddCommand(newCommand);
+root.AddCommand(getSessionsCommand);
+root.AddCommand(deleteCommand);
+root.AddCommand(readConfigCommand);
 
 #endregion
 
 try
 {
-    var executionsArg = args.FirstOrDefault() ?? string.Empty;
-    await commands[executionsArg].ExecuteAsync();
+    await root.InvokeAsync(args);
 }
 catch (Exception ex)
 {

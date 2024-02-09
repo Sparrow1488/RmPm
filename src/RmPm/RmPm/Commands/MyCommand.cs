@@ -1,6 +1,6 @@
 namespace RmPm.Commands;
 
-public abstract class Command
+public abstract class MyCommand
 {
     public abstract Task ExecuteAsync();
 }

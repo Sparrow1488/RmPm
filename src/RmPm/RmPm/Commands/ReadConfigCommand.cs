@@ -3,7 +3,7 @@ using RmPm.Core.Contracts;
 
 namespace RmPm.Commands;
 
-public class ReadConfigCommand : Command
+public class ReadConfigCommand : MyCommand
 {
     private readonly InputHelper _inputHelper;
     private readonly string _findArgument;

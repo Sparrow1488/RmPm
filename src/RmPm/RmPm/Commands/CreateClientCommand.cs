@@ -6,7 +6,7 @@ using Serilog;
 
 namespace RmPm.Commands;
 
-public class CreateClientCommand : Command
+public class CreateClientCommand : MyCommand
 {
     private readonly ProxyManager _pm;
     private readonly SocksConfigReader _configReader;

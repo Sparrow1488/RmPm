@@ -4,7 +4,7 @@ using Serilog;
 
 namespace RmPm.Commands;
 
-public class GetSessionsCommand : Command
+public class GetSessionsCommand : MyCommand
 {
     private readonly SocksManager _pm;
     private readonly ILogger _logger;

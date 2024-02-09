@@ -3,7 +3,7 @@ using Serilog.Core;
 
 namespace RmPm.Commands;
 
-public class DeleteClientCommand : Command
+public class DeleteClientCommand : MyCommand
 {
     private readonly SocksManager _pm;
     private readonly Logger _logger;
