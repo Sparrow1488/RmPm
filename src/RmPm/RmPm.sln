@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.Cli", "Tester.Cli\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester.Loop", "Tester.Loop\Tester.Loop.csproj", "{5CDE2B0E-16EE-409C-817D-FB9D74AB704E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{986EE7DF-0699-485F-A9ED-39A48486002F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,10 @@ Global
 		{5CDE2B0E-16EE-409C-817D-FB9D74AB704E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5CDE2B0E-16EE-409C-817D-FB9D74AB704E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5CDE2B0E-16EE-409C-817D-FB9D74AB704E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{500E6C60-1082-4C29-9349-C9549496D66C} = {986EE7DF-0699-485F-A9ED-39A48486002F}
+		{E595E53E-F1C8-4EE2-8C52-3952EF2741A0} = {986EE7DF-0699-485F-A9ED-39A48486002F}
+		{5CDE2B0E-16EE-409C-817D-FB9D74AB704E} = {986EE7DF-0699-485F-A9ED-39A48486002F}
 	EndGlobalSection
 EndGlobal
